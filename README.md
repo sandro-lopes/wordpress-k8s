@@ -169,34 +169,27 @@ Deseja adicionar automaticamente ao /etc/hosts? (s/n): s
 
 #### Acessando o WordPress no ambiente Killercoda
 
-Para acessar o WordPress diretamente no navegador do ambiente Killercoda:
+O WordPress será configurado com NodePort para fácil acesso no Killercoda. Você verá uma mensagem informando a porta NodePort atribuída (geralmente na faixa 30000-32767).
 
-1. Clique no ícone "+" no topo do terminal
+Para acessar o WordPress:
+
+1. Clique no ícone "hambúrguer" no topo à direita do terminal (ao lado do tempo restante de utilização)
 2. Selecione "Traffic / Ports"
-3. Digite a porta 80 e clique em "Access"
+3. Digite a porta NodePort informada no terminal (ex: 32XXX) e clique em "Access"
+4. Uma nova aba será aberta com o WordPress funcionando
 
-Alternativamente, você pode usar port-forward para acessar em uma porta específica:
-
-```bash
-kubectl port-forward svc/wordpress 8080:80
-```
-
-E então acessar através de: http://localhost:8080
+Este método é mais confiável no ambiente Killercoda do que usar Ingress ou port-forward.
 
 #### Acessando o WordPress na sua máquina local
 
-Para acessar o WordPress rodando no Killercoda a partir da sua máquina local, você tem duas opções:
+Para acessar o WordPress rodando no Killercoda a partir da sua máquina local, a maneira mais prática é:
 
 1. **Usando o Terminal Killercoda no Navegador**: 
-   - Acesse através da interface web do Killercoda, seguindo os passos acima para expor a porta 80
+   - Acesse através da interface web do Killercoda, seguindo os passos acima para expor a porta NodePort
 
-2. **Criando um túnel SSH** (se disponível no Killercoda):
-   - Adicione a entrada `172.30.1.2 wordpress.local` no arquivo `/etc/hosts` da sua máquina local
-   - Crie um túnel SSH para o ambiente Killercoda (verifique se o Killercoda suporta essa funcionalidade)
-   ```bash
-   ssh -L 80:172.30.1.2:80 usuario@endereco-do-killercoda
-   ```
-   - Acesse http://wordpress.local no seu navegador local
+Se você precisar de acesso direto (avançado e nem sempre possível):
+   - Identifique o IP externo do ambiente Killercoda
+   - Tente acessar usando http://<IP-Killercoda>:<Porta-NodePort> no seu navegador local
 
 Nota: A acessibilidade externa depende das configurações de rede do ambiente Killercoda. Em alguns casos, pode ser necessário usar apenas a interface web fornecida pela plataforma.
 

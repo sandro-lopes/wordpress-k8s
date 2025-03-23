@@ -74,8 +74,15 @@ print_info "Implantando WordPress..."
 kubectl apply -f "$BASE_DIR/kubernetes/wordpress-pvc.yaml"
 kubectl apply -f "$BASE_DIR/kubernetes/wordpress-deployment.yaml"
 kubectl apply -f "$BASE_DIR/kubernetes/wordpress-service.yaml"
-kubectl apply -f "$BASE_DIR/kubernetes/wordpress-ingress.yaml"
-print_success "WordPress implantado"
+
+# Configurar o serviço WordPress como NodePort para acesso externo
+print_info "Configurando o serviço WordPress como NodePort..."
+kubectl patch svc wordpress -p '{"spec":{"type":"NodePort"}}'
+
+# Obter a porta NodePort atribuída
+NODEPORT=$(kubectl get svc wordpress -o jsonpath='{.spec.ports[0].nodePort}')
+
+print_success "WordPress implantado e configurado como NodePort na porta $NODEPORT"
 
 # Aguardar o WordPress estar pronto
 print_info "Aguardando o WordPress estar pronto..."
@@ -99,28 +106,25 @@ if [[ "$add_hosts" == "s" || "$add_hosts" == "S" ]]; then
 fi
 
 # Exibir informações sobre como acessar via Killercoda
-print_info "Se você está usando o Killercoda:"
-echo "1. Clique no ícone 'hambuguer' no topo à direita do terminal"
+print_info "Para acessar o WordPress no Killercoda:"
+echo "1. Clique no ícone 'hambúrguer' no topo à direita do terminal"
 echo "2. Selecione 'Traffic / Ports'"
-echo "3. Digite a porta 80 e clique em 'Access'"
+echo "3. Digite a porta $NODEPORT e clique em 'Access'"
 echo ""
-print_info "Se encontrar erro '404 page not found', tente o seguinte:"
-echo "Execute: kubectl port-forward svc/wordpress 8080:80 &"
-echo "Em seguida, acesse novamente pelo ícone 'hambuguer', selecionando 'Traffic / Ports' com a porta 8080"
-echo "Ou execute o comando: kubectl port-forward svc/wordpress 8080:80 e acesse http://localhost:8080"
+print_info "A porta NodePort atribuída é: $NODEPORT"
+echo "Use essa porta para acessar o WordPress no navegador."
 
 print_info "Para acessar de sua máquina local (se disponível):"
 echo "1. Use a interface web do Killercoda conforme acima, ou"
-echo "2. Configure sua máquina local:"
+echo "2. Se tiver acesso direto ao ambiente Killercoda:"
 echo "   - Adicione '$INGRESS_IP wordpress.local' ao arquivo /etc/hosts local"
-echo "   - Se disponível, crie um túnel SSH: ssh -L 80:$INGRESS_IP:80 usuario@endereco-do-killercoda"
-echo "   - Acesse http://wordpress.local no seu navegador local"
+echo "   - Acesse http://$INGRESS_IP:$NODEPORT no seu navegador local"
 echo "Nota: A acessibilidade externa depende das configurações do ambiente Killercoda"
 
 # Exibir informações finais
 print_info "Implantação concluída!"
 echo "======================================================================="
-echo "WordPress está disponível em: http://wordpress.local"
+echo "WordPress está disponível na porta NodePort: $NODEPORT"
 echo "Para verificar o status dos pods: kubectl get pods"
 echo "Para acessar os logs do WordPress: kubectl logs -l app=wordpress,tier=frontend"
 echo "Para acessar os logs do MySQL: kubectl logs -l app=wordpress,tier=mysql"

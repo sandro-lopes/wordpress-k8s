@@ -98,7 +98,19 @@ git clone https://github.com/sandro-lopes/wordpress-k8s.git
 cd wordpress-k8s
 ```
 
-Durante a execução do script de implantação na próxima etapa, você receberá a seguinte mensagem:
+### 6. Método Simplificado: Usar o Script de Implantação
+ 
+A maneira mais fácil de implantar todo o ambiente é usando o script de implantação fornecido:
+ 
+```bash
+# Tornar o script executável
+chmod +x scripts/deploy.sh
+ 
+# Executar o script de implantação
+./scripts/deploy.sh
+```
+
+Durante a execução do script de implantação, você receberá a seguinte mensagem:
 
 ```
 Você precisa adicionar a seguinte entrada ao seu arquivo /etc/hosts:
@@ -106,113 +118,50 @@ Você precisa adicionar a seguinte entrada ao seu arquivo /etc/hosts:
 Deseja adicionar automaticamente ao /etc/hosts? (s/n): s
 ```
 
-É importante responder "s" para que o script possa adicionar automaticamente a entrada necessária ao arquivo `/etc/hosts`, facilitando o acesso ao WordPress pelo nome de domínio configurado.
+É importante responder "s" para que o script possa adicionar automaticamente a entrada necessária ao arquivo `/etc/hosts`.
 
-#### 5.1 Acessando o WordPress no ambiente Killercoda
+#### 6.1 Acessando o WordPress no ambiente Killercoda
 
-Uma vez que a instalação estiver concluída, para acessar o WordPress diretamente no navegador do ambiente Killercoda:
-
-1. Clique no ícone "hambuguer" no topo à direira do terminal (ao lado do tempo restante de utilização)
-2. Selecione "Traffic / Ports"
-3. Digite a porta 80 e clique em "Access"
-
-**Nota importante**: Se ao abrir a nova janela você receber um erro "404 page not found", isso pode acontecer porque:
-
-1. O Ingress ainda não está totalmente configurado
-2. A porta 80 não está sendo corretamente exposta pelo Killercoda
-3. O WordPress ainda não está totalmente inicializado
-
-Para resolver esse problema, tente uma das seguintes abordagens:
-
-* **Solução 1**: Use o port-forward diretamente para o serviço do WordPress:
-  ```bash
-  # Cancele qualquer port-forward existente (se houver)
-  pkill -f "kubectl port-forward"
-  
-  # Crie um novo port-forward na porta 8080
-  kubectl port-forward svc/wordpress 8080:80 &
-  ```
-  Em seguida, acesse pelo navegador usando:
-  1. Clique no ícone "hambuguer" novamente
-  2. Selecione "Traffic / Ports"
-  3. Digite a porta 8080 e clique em "Access"
-
-* **Solução 2**: Verifique se o pod está em execução e se o serviço está configurado corretamente:
-  ```bash
-  # Verificar o status dos pods
-  kubectl get pods
-  
-  # Verificar o serviço do WordPress
-  kubectl get svc wordpress
-  
-  # Verificar se o ingress está configurado corretamente
-  kubectl get ingress
-  
-  # Ver os logs do WordPress para identificar possíveis problemas
-  kubectl logs -l app=wordpress,tier=frontend
-  ```
-
-* **Solução 3**: Se o problema persistir, tente acessar o WordPress diretamente pelo IP do cluster:
-  ```bash
-  # Obter o IP do serviço
-  WORDPRESS_IP=$(kubectl get svc wordpress -o jsonpath='{.spec.clusterIP}')
-  
-  # Use curl para testar o acesso
-  curl http://$WORDPRESS_IP:80
-  ```
-  
-  Se o curl retornar conteúdo HTML, o WordPress está funcionando, mas há um problema com o acesso via Ingress.
-
-Alternativamente, você pode usar port-forward para acessar em uma porta específica:
+Para acessar o WordPress no ambiente Killercoda, use o seguinte método (NodePort):
 
 ```bash
-kubectl port-forward svc/wordpress 8080:80
+# Configurar o serviço WordPress como NodePort 
+kubectl patch svc wordpress -p '{"spec":{"type":"NodePort"}}'
+
+# Verificar em qual porta o serviço está exposto
+kubectl get svc wordpress
 ```
 
-E então acessar através de: http://localhost:8080
+Você verá algo como `80:32XXX/TCP` na coluna PORT(S), onde 32XXX é a porta NodePort atribuída automaticamente.
 
-#### 5.2 Acessando o WordPress na sua máquina local
+Para acessar o WordPress:
 
-Para acessar o WordPress rodando no Killercoda a partir da sua máquina local, você tem duas opções:
+1. Clique no ícone "hambúrguer" no topo à direita do terminal (ao lado do tempo restante de utilização)
+2. Selecione "Traffic / Ports"
+3. Digite a porta NodePort (32XXX) que foi atribuída e clique em "Access"
+4. Uma nova aba será aberta com o WordPress funcionando
+
+**Nota**: Este método é mais confiável no ambiente Killercoda do que usar Ingress ou port-forward.
+
+#### 6.2 Acessando o WordPress na sua máquina local
+
+Para acessar o WordPress rodando no Killercoda a partir da sua máquina local, a maneira mais prática é:
 
 1. **Usando o Terminal Killercoda no Navegador**: 
-   - Acesse através da interface web do Killercoda, seguindo os passos acima para expor a porta 80
+   - Acesse através da interface web do Killercoda, seguindo os passos acima para expor a porta NodePort
 
-2. **Criando um túnel SSH** (se disponível no Killercoda):
-   - Adicione a entrada `172.30.1.2 wordpress.local` no arquivo `/etc/hosts` da sua máquina local
-   - Crie um túnel SSH para o ambiente Killercoda (verifique se o Killercoda suporta essa funcionalidade)
-   ```bash
-   ssh -L 80:172.30.1.2:80 usuario@endereco-do-killercoda
-   ```
-   - Acesse http://wordpress.local no seu navegador local
+Se precisar de acesso direto (avançado e nem sempre possível):
+   - Identifique o IP externo do ambiente Killercoda
+   - Adicione uma entrada ao arquivo hosts da sua máquina local
+   - Tente acessar usando a porta NodePort
 
 Nota: A acessibilidade externa depende das configurações de rede do ambiente Killercoda. Em alguns casos, pode ser necessário usar apenas a interface web fornecida pela plataforma.
 
-### 6. Método Simplificado: Usar o Script de Implantação
-
-A maneira mais fácil de implantar todo o ambiente é usando o script de implantação fornecido:
-
-```bash
-# Tornar o script executável
-chmod +x scripts/deploy.sh
-
-# Executar o script de implantação
-./scripts/deploy.sh
-```
-
-O script irá automaticamente:
-- Verificar se o K3s está instalado e configurado corretamente
-- Implantar o MySQL e aguardar até que esteja pronto
-- Implantar o WordPress e aguardar até que esteja pronto
-- Ajudar a configurar o acesso ao WordPress
-
-**Nota**: Se você estiver usando os scripts originais projetados para MicroK8s, poderá ser necessário adaptá-los para K3s. Veremos como fazer isso mais adiante.
-
-Se preferir realizar a implantação manualmente, siga os passos 7 a 10 abaixo.
-
 ### 7. Implantar o MySQL
 
-Primeiro, implantaremos o MySQL que servirá como banco de dados para o WordPress:
+Se você usou o script de implantação (seção 6), pode pular as seções 7 e 8, pois elas já foram executadas automaticamente.
+
+Se preferir realizar a implantação manualmente:
 
 ```bash
 # Aplicar o PersistentVolumeClaim para armazenamento persistente
@@ -233,7 +182,7 @@ kubectl wait --for=condition=ready pod -l app=wordpress,tier=mysql --timeout=300
 
 ### 8. Implantar o WordPress
 
-Agora, implantaremos o WordPress que se conectará ao MySQL:
+Continuando a implantação manual:
 
 ```bash
 # Aplicar o PersistentVolumeClaim para armazenamento persistente
@@ -242,71 +191,49 @@ kubectl apply -f kubernetes/wordpress-pvc.yaml
 # Aplicar o Deployment do WordPress
 kubectl apply -f kubernetes/wordpress-deployment.yaml
 
-# Aplicar o Service do WordPress
+# Aplicar o Service do WordPress (configurado como NodePort)
 kubectl apply -f kubernetes/wordpress-service.yaml
-
-# Aplicar o Ingress para expor o WordPress externamente
-kubectl apply -f kubernetes/wordpress-ingress.yaml
+kubectl patch svc wordpress -p '{"spec":{"type":"NodePort"}}'
 
 # Aguardar até que o pod do WordPress esteja pronto
 kubectl wait --for=condition=ready pod -l app=wordpress,tier=frontend --timeout=300s
+
+# Verificar em qual porta o NodePort está exposto
+kubectl get svc wordpress
 ```
 
-### 9. Configurar o Acesso ao WordPress
-
-Para acessar o WordPress, precisamos configurar o arquivo hosts:
-
-```bash
-# Obter o IP do serviço Ingress (para K3s)
-INGRESS_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[0].address}')
-
-# Adicionar a entrada ao arquivo hosts
-echo "$INGRESS_IP wordpress.local" | sudo tee -a /etc/hosts
-
-# Verificar se a entrada foi adicionada corretamente
-cat /etc/hosts
-```
-
-#### 9.1 Acessando o WordPress na Killercoda
-
-Se você já seguiu as instruções da seção 5.1 para acessar o WordPress no ambiente Killercoda, você pode pular esta etapa.
-
-Caso contrário, lembre-se que no Killercoda você precisa utilizar a funcionalidade de exposição de portas:
-
-1. Na interface do Killercoda, clique no ícone "hambuguer" no topo à direita do terminal
-2. Selecione a opção "Traffic / Ports"
-3. Insira a porta 80 e clique em "Access"
-4. Uma nova aba será aberta com o WordPress
-
-Se você encontrar o erro "404 page not found", consulte as instruções de solução de problemas na seção 5.1.
-
-Alternativamente, você também pode acessar via linha de comando usando port-forward:
-
-```bash
-# Verificar se o Ingress está funcionando
-kubectl get ingress
-
-# Expor o serviço diretamente (em background para continuar usando o terminal)
-kubectl port-forward svc/wordpress 8080:80 &
-```
-
-Em seguida, acesse pelo navegador usando:
-1. Clique no ícone "hambuguer" 
-2. Selecione "Traffic / Ports"
-3. Digite a porta 8080 e clique em "Access"
-
-### 10. Acessar o WordPress
+### 9. Acessar o WordPress
 
 Agora você pode acessar o WordPress pelo navegador:
 
-1. Abra o navegador e acesse: http://wordpress.local (ou através da porta exposta na Killercoda)
-2. Você verá a tela de configuração inicial do WordPress
-3. Complete as informações solicitadas:
+1. Obtenha a porta NodePort exposta:
+   ```bash
+   kubectl get svc wordpress
+   ```
+   Observe o número da porta na coluna PORT(S) - será algo como `80:32XXX/TCP`
+
+2. No Killercoda:
+   - Clique no ícone "hambúrguer" no topo à direita do terminal
+   - Selecione "Traffic / Ports"
+   - Digite a porta NodePort (32XXX) que foi atribuída
+   - Clique em "Access"
+
+3. Na tela de configuração, complete as informações solicitadas:
    - Título do site: Site da Empresa
    - Nome de usuário: admin
    - Senha: (escolha uma senha forte)
    - E-mail: seu-email@empresa.com
+
 4. Clique em "Instalar WordPress"
+
+5. Após a instalação, você será redirecionado para a tela de login:
+   - Faça login com o usuário e senha que você acabou de configurar
+   - Você será direcionado para o painel de administração do WordPress
+
+**Nota**: Se você encontrar problemas de acesso:
+- Verifique se o pod do WordPress está pronto usando `kubectl get pods`
+- Verifique os logs usando `kubectl logs -l app=wordpress,tier=frontend`
+- Certifique-se de que está usando a porta NodePort correta
 
 ## Verificação do Status da Aplicação
 
@@ -318,24 +245,6 @@ chmod +x scripts/status.sh
 
 # Executar o script
 ./scripts/status.sh
-```
-
-**Nota**: Se o script de status.sh foi originalmente escrito para MicroK8s, você precisará modificá-lo para usar o kubectl padrão em vez de microk8s kubectl.
-
-## Adaptação dos Scripts para K3s
-
-Se você baixou scripts originalmente projetados para o MicroK8s, será necessário adaptá-los para K3s:
-
-```bash
-# Editar o script de implantação
-sed -i 's/microk8s kubectl/kubectl/g' scripts/deploy.sh
-sed -i 's/microk8s status/sudo systemctl status k3s/g' scripts/deploy.sh
-
-# Editar o script de status
-sed -i 's/microk8s kubectl/kubectl/g' scripts/status.sh
-
-# Editar o script de limpeza
-sed -i 's/microk8s kubectl/kubectl/g' scripts/cleanup.sh
 ```
 
 ## Teste de Resiliência
@@ -352,8 +261,8 @@ kubectl delete pod $WORDPRESS_POD
 # Verificar que um novo pod é criado automaticamente
 kubectl get pods -w
 
-# Quando o novo pod estiver pronto, acesse novamente o WordPress no navegador
-# http://wordpress.local
+# Quando o novo pod estiver pronto, acesse novamente o WordPress pelo navegador
+# usando a mesma porta NodePort de antes
 
 # Todas as configurações devem estar preservadas!
 ```
@@ -370,9 +279,7 @@ kubectl delete pod $MYSQL_POD
 # Verificar que um novo pod é criado automaticamente
 kubectl get pods -w
 
-# Quando o novo pod estiver pronto, acesse novamente o WordPress no navegador
-# http://wordpress.local
-
+# Quando o novo pod estiver pronto, acesse novamente o WordPress pelo navegador
 # O site deve continuar funcionando e os dados devem estar preservados!
 ```
 
