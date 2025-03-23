@@ -94,9 +94,99 @@ kubectl get nodes
 
 ```bash
 # Clonar o repositório (ou copiar manualmente os arquivos)
-git clone <url-do-repositorio> wordpress-k8s
+git clone https://github.com/sandro-lopes/wordpress-k8s.git
 cd wordpress-k8s
 ```
+
+Durante a execução do script de implantação na próxima etapa, você receberá a seguinte mensagem:
+
+```
+Você precisa adicionar a seguinte entrada ao seu arquivo /etc/hosts:
+172.30.1.2 wordpress.local
+Deseja adicionar automaticamente ao /etc/hosts? (s/n): s
+```
+
+É importante responder "s" para que o script possa adicionar automaticamente a entrada necessária ao arquivo `/etc/hosts`, facilitando o acesso ao WordPress pelo nome de domínio configurado.
+
+#### 5.1 Acessando o WordPress no ambiente Killercoda
+
+Uma vez que a instalação estiver concluída, para acessar o WordPress diretamente no navegador do ambiente Killercoda:
+
+1. Clique no ícone "hambuguer" no topo à direira do terminal (ao lado do tempo restante de utilização)
+2. Selecione "Traffic / Ports"
+3. Digite a porta 80 e clique em "Access"
+
+**Nota importante**: Se ao abrir a nova janela você receber um erro "404 page not found", isso pode acontecer porque:
+
+1. O Ingress ainda não está totalmente configurado
+2. A porta 80 não está sendo corretamente exposta pelo Killercoda
+3. O WordPress ainda não está totalmente inicializado
+
+Para resolver esse problema, tente uma das seguintes abordagens:
+
+* **Solução 1**: Use o port-forward diretamente para o serviço do WordPress:
+  ```bash
+  # Cancele qualquer port-forward existente (se houver)
+  pkill -f "kubectl port-forward"
+  
+  # Crie um novo port-forward na porta 8080
+  kubectl port-forward svc/wordpress 8080:80 &
+  ```
+  Em seguida, acesse pelo navegador usando:
+  1. Clique no ícone "hambuguer" novamente
+  2. Selecione "Traffic / Ports"
+  3. Digite a porta 8080 e clique em "Access"
+
+* **Solução 2**: Verifique se o pod está em execução e se o serviço está configurado corretamente:
+  ```bash
+  # Verificar o status dos pods
+  kubectl get pods
+  
+  # Verificar o serviço do WordPress
+  kubectl get svc wordpress
+  
+  # Verificar se o ingress está configurado corretamente
+  kubectl get ingress
+  
+  # Ver os logs do WordPress para identificar possíveis problemas
+  kubectl logs -l app=wordpress,tier=frontend
+  ```
+
+* **Solução 3**: Se o problema persistir, tente acessar o WordPress diretamente pelo IP do cluster:
+  ```bash
+  # Obter o IP do serviço
+  WORDPRESS_IP=$(kubectl get svc wordpress -o jsonpath='{.spec.clusterIP}')
+  
+  # Use curl para testar o acesso
+  curl http://$WORDPRESS_IP:80
+  ```
+  
+  Se o curl retornar conteúdo HTML, o WordPress está funcionando, mas há um problema com o acesso via Ingress.
+
+Alternativamente, você pode usar port-forward para acessar em uma porta específica:
+
+```bash
+kubectl port-forward svc/wordpress 8080:80
+```
+
+E então acessar através de: http://localhost:8080
+
+#### 5.2 Acessando o WordPress na sua máquina local
+
+Para acessar o WordPress rodando no Killercoda a partir da sua máquina local, você tem duas opções:
+
+1. **Usando o Terminal Killercoda no Navegador**: 
+   - Acesse através da interface web do Killercoda, seguindo os passos acima para expor a porta 80
+
+2. **Criando um túnel SSH** (se disponível no Killercoda):
+   - Adicione a entrada `172.30.1.2 wordpress.local` no arquivo `/etc/hosts` da sua máquina local
+   - Crie um túnel SSH para o ambiente Killercoda (verifique se o Killercoda suporta essa funcionalidade)
+   ```bash
+   ssh -L 80:172.30.1.2:80 usuario@endereco-do-killercoda
+   ```
+   - Acesse http://wordpress.local no seu navegador local
+
+Nota: A acessibilidade externa depende das configurações de rede do ambiente Killercoda. Em alguns casos, pode ser necessário usar apenas a interface web fornecida pela plataforma.
 
 ### 6. Método Simplificado: Usar o Script de Implantação
 
@@ -179,22 +269,31 @@ cat /etc/hosts
 
 #### 9.1 Acessando o WordPress na Killercoda
 
-Quando estiver usando o Killercoda, você precisa utilizar a funcionalidade de exposição de portas:
+Se você já seguiu as instruções da seção 5.1 para acessar o WordPress no ambiente Killercoda, você pode pular esta etapa.
 
-1. Na interface do Killercoda, clique no ícone de "+" no topo do terminal
+Caso contrário, lembre-se que no Killercoda você precisa utilizar a funcionalidade de exposição de portas:
+
+1. Na interface do Killercoda, clique no ícone "hambuguer" no topo à direita do terminal
 2. Selecione a opção "Traffic / Ports"
 3. Insira a porta 80 e clique em "Access"
 4. Uma nova aba será aberta com o WordPress
 
-Alternativamente, você também pode acessar via linha de comando:
+Se você encontrar o erro "404 page not found", consulte as instruções de solução de problemas na seção 5.1.
+
+Alternativamente, você também pode acessar via linha de comando usando port-forward:
 
 ```bash
 # Verificar se o Ingress está funcionando
 kubectl get ingress
 
-# Se necessário, expor o serviço diretamente
-kubectl port-forward svc/wordpress 8080:80
+# Expor o serviço diretamente (em background para continuar usando o terminal)
+kubectl port-forward svc/wordpress 8080:80 &
 ```
+
+Em seguida, acesse pelo navegador usando:
+1. Clique no ícone "hambuguer" 
+2. Selecione "Traffic / Ports"
+3. Digite a porta 8080 e clique em "Access"
 
 ### 10. Acessar o WordPress
 

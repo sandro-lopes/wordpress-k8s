@@ -155,27 +155,50 @@ terraform apply -auto-approve
 
 ## Acessando o WordPress
 
-### Configurar arquivo hosts
+### Passo 5: Configurar arquivo hosts e acessar o WordPress
 
-Para acessar o WordPress pelo nome de domínio configurado, adicione a seguinte entrada ao arquivo `/etc/hosts`:
+Durante a execução do script de implantação, você receberá a seguinte mensagem:
 
 ```
-# Obter o IP do serviço Ingress
-INGRESS_IP=$(microk8s kubectl get svc -n ingress -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}')
-
-# Se o comando acima não retornar um IP, usar o IP do nó
-if [ -z "$INGRESS_IP" ]; then
-  INGRESS_IP=$(hostname -I | awk '{print $1}')
-fi
-
-# Adicionar ao /etc/hosts
-echo "$INGRESS_IP wordpress.local" | sudo tee -a /etc/hosts
+Você precisa adicionar a seguinte entrada ao seu arquivo /etc/hosts:
+172.30.1.2 wordpress.local
+Deseja adicionar automaticamente ao /etc/hosts? (s/n): s
 ```
 
-### Acesse o WordPress no navegador
+É importante responder "s" para que o script possa adicionar automaticamente a entrada necessária ao arquivo `/etc/hosts`, facilitando o acesso ao WordPress pelo nome de domínio configurado.
 
-Abra o navegador e acesse:
-- http://wordpress.local
+#### Acessando o WordPress no ambiente Killercoda
+
+Para acessar o WordPress diretamente no navegador do ambiente Killercoda:
+
+1. Clique no ícone "+" no topo do terminal
+2. Selecione "Traffic / Ports"
+3. Digite a porta 80 e clique em "Access"
+
+Alternativamente, você pode usar port-forward para acessar em uma porta específica:
+
+```bash
+kubectl port-forward svc/wordpress 8080:80
+```
+
+E então acessar através de: http://localhost:8080
+
+#### Acessando o WordPress na sua máquina local
+
+Para acessar o WordPress rodando no Killercoda a partir da sua máquina local, você tem duas opções:
+
+1. **Usando o Terminal Killercoda no Navegador**: 
+   - Acesse através da interface web do Killercoda, seguindo os passos acima para expor a porta 80
+
+2. **Criando um túnel SSH** (se disponível no Killercoda):
+   - Adicione a entrada `172.30.1.2 wordpress.local` no arquivo `/etc/hosts` da sua máquina local
+   - Crie um túnel SSH para o ambiente Killercoda (verifique se o Killercoda suporta essa funcionalidade)
+   ```bash
+   ssh -L 80:172.30.1.2:80 usuario@endereco-do-killercoda
+   ```
+   - Acesse http://wordpress.local no seu navegador local
+
+Nota: A acessibilidade externa depende das configurações de rede do ambiente Killercoda. Em alguns casos, pode ser necessário usar apenas a interface web fornecida pela plataforma.
 
 Você verá a página de configuração inicial do WordPress:
 

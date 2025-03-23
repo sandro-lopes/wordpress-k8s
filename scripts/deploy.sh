@@ -100,10 +100,22 @@ fi
 
 # Exibir informações sobre como acessar via Killercoda
 print_info "Se você está usando o Killercoda:"
-echo "1. Clique no ícone '+' no topo do terminal"
+echo "1. Clique no ícone 'hambuguer' no topo à direita do terminal"
 echo "2. Selecione 'Traffic / Ports'"
 echo "3. Digite a porta 80 e clique em 'Access'"
-echo "Ou execute o comando: kubectl port-forward svc/wordpress 8080:80"
+echo ""
+print_info "Se encontrar erro '404 page not found', tente o seguinte:"
+echo "Execute: kubectl port-forward svc/wordpress 8080:80 &"
+echo "Em seguida, acesse novamente pelo ícone 'hambuguer', selecionando 'Traffic / Ports' com a porta 8080"
+echo "Ou execute o comando: kubectl port-forward svc/wordpress 8080:80 e acesse http://localhost:8080"
+
+print_info "Para acessar de sua máquina local (se disponível):"
+echo "1. Use a interface web do Killercoda conforme acima, ou"
+echo "2. Configure sua máquina local:"
+echo "   - Adicione '$INGRESS_IP wordpress.local' ao arquivo /etc/hosts local"
+echo "   - Se disponível, crie um túnel SSH: ssh -L 80:$INGRESS_IP:80 usuario@endereco-do-killercoda"
+echo "   - Acesse http://wordpress.local no seu navegador local"
+echo "Nota: A acessibilidade externa depende das configurações do ambiente Killercoda"
 
 # Exibir informações finais
 print_info "Implantação concluída!"
