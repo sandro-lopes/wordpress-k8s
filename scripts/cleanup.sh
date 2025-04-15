@@ -1,6 +1,5 @@
 #!/bin/bash
 # Script para remover todos os recursos do WordPress e MySQL no Kubernetes
-# Autor: Equipe DevOps
 
 # Definindo cores para melhor visualização
 RED='\033[0;31m'
@@ -8,30 +7,24 @@ GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
-# Função para imprimir mensagem de sucesso
 function print_success() {
   echo -e "${GREEN}[SUCESSO]${NC} $1"
 }
 
-# Função para imprimir mensagem de erro
 function print_error() {
   echo -e "${RED}[ERRO]${NC} $1"
   exit 1
 }
 
-# Função para imprimir mensagem de informação
 function print_info() {
   echo -e "${YELLOW}[INFO]${NC} $1"
 }
 
-# Verificar se o kubectl está disponível
 print_info "Verificando se o K3s está instalado..."
 if ! command -v kubectl >/dev/null 2>&1; then
   print_error "K3s não está instalado ou kubectl não está disponível."
 fi
 
-# Determinar o diretório base do projeto
-# Se o script estiver em um diretório 'scripts', volte um nível
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 if [[ "$SCRIPT_DIR" == *"/scripts" ]]; then
     BASE_DIR="$(dirname "$SCRIPT_DIR")"
@@ -39,7 +32,6 @@ else
     BASE_DIR="$SCRIPT_DIR"
 fi
 
-# Confirmação para continuar
 echo "ATENÇÃO: Este script removerá todos os recursos do WordPress e MySQL do seu cluster Kubernetes."
 echo "Isso inclui TODOS os dados armazenados no WordPress e no banco de dados MySQL."
 echo "Esta ação NÃO PODE ser desfeita!"
@@ -103,7 +95,6 @@ if [[ "$uninstall_k3s" == "s" || "$uninstall_k3s" == "S" ]]; then
   fi
 fi
 
-# Exibir informações finais
 print_info "Limpeza concluída!"
 echo "======================================================================="
 echo "Todos os recursos do WordPress e MySQL foram removidos do cluster Kubernetes."
