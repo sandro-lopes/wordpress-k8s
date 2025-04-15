@@ -141,14 +141,6 @@ Para acessar o WordPress:
 3. Digite a porta NodePort (32XXX) que foi atribuída e clique em "Access"
 4. Uma nova aba será aberta com o WordPress funcionando
 
-**Nota**: Este método é mais confiável no ambiente Killercoda do que usar Ingress ou port-forward.
-
-#### 6.2 Acessando o WordPress na sua máquina local
-
-Para acessar o WordPress rodando no Killercoda a partir da sua máquina local, a maneira mais prática é:
-
-1. **Usando o Terminal Killercoda no Navegador**: 
-   - Acesse através da interface web do Killercoda, seguindo os passos acima para expor a porta NodePort
 
 ### 7. Implantar o MySQL
 
